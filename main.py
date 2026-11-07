@@ -1,4 +1,40 @@
-# JobRadar - Days 2 and 3: process one job posting
+# JobRadar - Day 4: process one job posting with functions
+
+
+def clean_title(title: str) -> str:
+    """Return the title without extra spaces and with each word capitalised."""
+    return title.strip().title()
+
+
+def get_city(location: str) -> str:
+    """Return the city from a location like 'Lisbon, Portugal'."""
+    return location.split(",")[0].strip()
+
+
+def to_annual_salary(amount: str, pay_period: str) -> float | None:
+    """Convert a pay amount to a yearly salary, or return None if the period is unknown."""
+    salary = float(amount)
+    if pay_period == "YEARLY":
+        return salary
+    elif pay_period == "MONTHLY":
+        return salary * 14
+    elif pay_period == "HOURLY":
+        return salary * 2080
+    else:
+        return None
+
+
+def project_salary(annual_salary: float, target: float, years: int = 5, raise_rate: float = 0.03) -> None:
+    """Print the yearly salary with annual raises until the target is reached."""
+    for year in range(1, years + 1):
+        print(f"Year {year}: {annual_salary:,.2f}")
+        if annual_salary >= target:
+            print(f"Target of {target:,.2f} reached in year {year}")
+            break
+        annual_salary *= 1 + raise_rate
+    else:
+        print(f"Target not reached in {years} years")
+
 
 # Raw posting (as it would come from the CSV)
 title = "   senior Machine Learning ENGINEER  "
@@ -7,41 +43,13 @@ location = "Lisbon, Portugal"
 max_salary = "50.0"
 pay_period = "HOURLY"
 
-# Day 2: clean the text fields
-clean_title = title.strip().title()
-is_ml_role = "machine learning" in clean_title.lower()
-city = location.split(",")[0]
+title_clean = clean_title(title)
+print(f"{title_clean} @ {company} ({get_city(location)})")
+print(f"ML role: {'machine learning' in title_clean.lower()}")
 
-print(f"{clean_title} @ {company} ({city})")
-print(f"ML role: {is_ml_role}")
-
-# Day 3, Part A: convert the pay to a yearly salary
-salary = float(max_salary)
-
-if pay_period == "YEARLY":
-    annual_salary = salary
-elif pay_period == "MONTHLY":
-    annual_salary = salary * 14
-elif pay_period == "HOURLY":
-    annual_salary = salary * 2080
-else:
+annual_salary = to_annual_salary(max_salary, pay_period)
+if annual_salary is None:
     print(f"Unknown pay period: {pay_period}")
-    annual_salary = None
-
-if annual_salary is not None:
-    # Day 2: yearly and monthly amounts
+else:
     print(f"Annual salary: {annual_salary:,.2f}")
-    print(f"Monthly (12x): {annual_salary / 12:,.2f}")
-    print(f"Monthly (14x): {annual_salary / 14:,.2f}")
-
-    # Day 3, Part B: 5-year projection
-    target = 110000
-
-    for year in range(1, 6):
-        print(f"Year {year}: {annual_salary:,.2f}")
-        if annual_salary >= target:
-            print(f"Target of {target:,.2f} reached in year {year}")
-            break
-        annual_salary *= 1.03
-    else:
-        print("Target not reached in 5 years")
+    project_salary(annual_salary, 110000)
