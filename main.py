@@ -1,13 +1,27 @@
-# JobRadar - Day 5: read job postings from a CSV file.
 import csv
+import string
+
 
 def clean_title(title: str) -> str:
     """Return the title without extra spaces and with each word capitalised."""
-    return title.strip().title()
+    return string.capwords(title)
+
 
 def get_city(location: str) -> str:
     """Return the city from a location like 'Lisbon, Portugal'."""
-    return location.split(",")[0].strip()
+    if location == "United States":
+        return "Remote / unspecified"
+    else:
+        return location.split(",")[0].strip()
+
+
+def clean_company(name: str) -> str:
+    """Return the company name without extra spaces, or 'Unknown company' if empty."""
+    name = name.strip()
+    if not name:
+        return "Unknown company"
+    return name
+
 
 def to_annual_salary(amount: str, pay_period: str) -> float | None:
     """Convert a pay amount to a yearly salary, or return None if the period is unknown."""
@@ -23,6 +37,7 @@ def to_annual_salary(amount: str, pay_period: str) -> float | None:
     else:
         return None
 
+
 def project_salary(annual_salary: float, target: float, years: int = 5, raise_rate: float = 0.03) -> None:
     """Print the yearly salary with annual raises until the target is reached."""
     for year in range(1, years + 1):
@@ -35,14 +50,45 @@ def project_salary(annual_salary: float, target: float, years: int = 5, raise_ra
         print(f"Target not reached in {years} years")
 
 
-with open("data/sample_postings.csv", encoding="utf-8", newline="") as file:
+total = 0
+with_salary = 0
+yearly = 0
+monthly = 0
+hourly = 0
+empty_period = 0
+other_period = 0
+
+with open("data/postings.csv", encoding="utf-8", newline="") as file:
     reader = csv.DictReader(file)
-    for row in reader:
+    for i, row in enumerate(reader):
+        total += 1
         annual_salary = to_annual_salary(row["max_salary"], row["pay_period"])
+        pay_period = row["pay_period"]
+        if pay_period == "YEARLY":
+            yearly += 1
+        elif pay_period == "MONTHLY":
+            monthly += 1
+        elif pay_period == "HOURLY":
+            hourly += 1
+        elif pay_period == "":
+            empty_period += 1
+        else:
+            other_period += 1
         title = clean_title(row["title"])
         city = get_city(row["location"])
+        company = clean_company(row["company_name"])
         if annual_salary is None:
             salary_text = "salary not available"
         else:
             salary_text = f"{annual_salary:,.2f}"
-        print(f'{title} @ {row["company_name"]} ({city}): {salary_text}')
+            with_salary += 1
+        if i < 20:
+            print(f'{i + 1} - {title} @ {company} ({city}): {salary_text}')
+
+print(f"Total postings: {total}")
+print(f"With salary: {with_salary} ({with_salary / total:.1%})")
+print(f"YEARLY: {yearly}")
+print(f"MONTHLY: {monthly}")
+print(f"HOURLY: {hourly}")
+print(f"Empty: {empty_period}")
+print(f"Other: {other_period}")
