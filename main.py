@@ -1,18 +1,18 @@
-# JobRadar - Day 4: process one job posting with functions
-
+# JobRadar - Day 5: read job postings from a CSV file.
+import csv
 
 def clean_title(title: str) -> str:
     """Return the title without extra spaces and with each word capitalised."""
     return title.strip().title()
 
-
 def get_city(location: str) -> str:
     """Return the city from a location like 'Lisbon, Portugal'."""
     return location.split(",")[0].strip()
 
-
 def to_annual_salary(amount: str, pay_period: str) -> float | None:
     """Convert a pay amount to a yearly salary, or return None if the period is unknown."""
+    if not amount:
+        return None
     salary = float(amount)
     if pay_period == "YEARLY":
         return salary
@@ -22,7 +22,6 @@ def to_annual_salary(amount: str, pay_period: str) -> float | None:
         return salary * 2080
     else:
         return None
-
 
 def project_salary(annual_salary: float, target: float, years: int = 5, raise_rate: float = 0.03) -> None:
     """Print the yearly salary with annual raises until the target is reached."""
@@ -36,20 +35,14 @@ def project_salary(annual_salary: float, target: float, years: int = 5, raise_ra
         print(f"Target not reached in {years} years")
 
 
-# Raw posting (as it would come from the CSV)
-title = "   senior Machine Learning ENGINEER  "
-company = "Acme AI Labs"
-location = "Lisbon, Portugal"
-max_salary = "50.0"
-pay_period = "HOURLY"
-
-title_clean = clean_title(title)
-print(f"{title_clean} @ {company} ({get_city(location)})")
-print(f"ML role: {'machine learning' in title_clean.lower()}")
-
-annual_salary = to_annual_salary(max_salary, pay_period)
-if annual_salary is None:
-    print(f"Unknown pay period: {pay_period}")
-else:
-    print(f"Annual salary: {annual_salary:,.2f}")
-    project_salary(annual_salary, 110000)
+with open("data/sample_postings.csv", encoding="utf-8", newline="") as file:
+    reader = csv.DictReader(file)
+    for row in reader:
+        annual_salary = to_annual_salary(row["max_salary"], row["pay_period"])
+        title = clean_title(row["title"])
+        city = get_city(row["location"])
+        if annual_salary is None:
+            salary_text = "salary not available"
+        else:
+            salary_text = f"{annual_salary:,.2f}"
+        print(f'{title} @ {row["company_name"]} ({city}): {salary_text}')

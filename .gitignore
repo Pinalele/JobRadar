@@ -17,3 +17,6 @@ data/
 
 # Secrets (API keys, from Phase 1)
 .env
+
+# Test file
+Test.py
