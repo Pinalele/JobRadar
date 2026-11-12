@@ -1,6 +1,7 @@
 import csv
 import string
 
+ai_role = ["ai", "artificial intelligence", "ml", "machine learning", "llm"]
 
 def clean_title(title: str) -> str:
     """Return the title without extra spaces and with each word capitalised."""
@@ -22,6 +23,11 @@ def clean_company(name: str) -> str:
         return "Unknown company"
     return name
 
+def is_ai_role(title):
+    for keyword in ai_role:
+        if keyword in title.lower():
+            return True
+    return False
 
 def to_annual_salary(amount: str, pay_period: str) -> float | None:
     """Convert a pay amount to a yearly salary, or return None if the period is unknown."""
@@ -58,9 +64,13 @@ hourly = 0
 empty_period = 0
 other_period = 0
 
+
+ai_postings = []
 with open("data/postings.csv", encoding="utf-8", newline="") as file:
     reader = csv.DictReader(file)
     for i, row in enumerate(reader):
+        if is_ai_role(row["title"]):
+            ai_postings.append(row)
         total += 1
         annual_salary = to_annual_salary(row["max_salary"], row["pay_period"])
         pay_period = row["pay_period"]
@@ -92,3 +102,17 @@ print(f"MONTHLY: {monthly}")
 print(f"HOURLY: {hourly}")
 print(f"Empty: {empty_period}")
 print(f"Other: {other_period}")
+
+
+
+
+
+print(is_ai_role("Machine Learning Engineer"))
+print(is_ai_role("Senior AI Researcher"))
+print(is_ai_role("Accountant"))
+print(is_ai_role("Retail Sales Associate"))
+
+
+print(len(ai_postings))
+print(ai_postings[0:20])
+
