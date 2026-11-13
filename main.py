@@ -1,7 +1,9 @@
 import csv
 import string
 
-ai_role = ["ai", "artificial intelligence", "ml", "machine learning", "llm"]
+ai_words = ["ai", "ml", "llm"]
+ai_phrases = ["artificial intelligence", "machine learning"]
+
 
 def clean_title(title: str) -> str:
     """Return the title without extra spaces and with each word capitalised."""
@@ -23,9 +25,13 @@ def clean_company(name: str) -> str:
         return "Unknown company"
     return name
 
-def is_ai_role(title):
-    for keyword in ai_role:
+def is_ai_role(title: str) -> bool:
+    """Return True if the title mentions AI or machine learning."""
+    for keyword in ai_phrases:
         if keyword in title.lower():
+            return True
+    for keyword in ai_words:
+        if keyword in title.lower().replace("/", " ").split():
             return True
     return False
 
@@ -55,6 +61,10 @@ def project_salary(annual_salary: float, target: float, years: int = 5, raise_ra
     else:
         print(f"Target not reached in {years} years")
 
+def listed_time_of(row):
+    """Return when the posting was listed, as a number."""
+    return float(row["listed_time"])
+ai_postings = []
 
 total = 0
 with_salary = 0
@@ -65,7 +75,7 @@ empty_period = 0
 other_period = 0
 
 
-ai_postings = []
+
 with open("data/postings.csv", encoding="utf-8", newline="") as file:
     reader = csv.DictReader(file)
     for i, row in enumerate(reader):
@@ -103,16 +113,11 @@ print(f"HOURLY: {hourly}")
 print(f"Empty: {empty_period}")
 print(f"Other: {other_period}")
 
+most_recent = sorted(ai_postings, key=listed_time_of, reverse= True)
+
+for row in most_recent[0:20]:
+    print(row["title"])
 
 
-
-
-print(is_ai_role("Machine Learning Engineer"))
-print(is_ai_role("Senior AI Researcher"))
-print(is_ai_role("Accountant"))
-print(is_ai_role("Retail Sales Associate"))
-
-
-print(len(ai_postings))
-print(ai_postings[0:20])
+print(f"AI postings: {len(ai_postings)}")
 
