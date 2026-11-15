@@ -1,5 +1,6 @@
 import csv
 import string
+from collections import Counter
 
 ai_words = ["ai", "ml", "llm"]
 ai_phrases = ["artificial intelligence", "machine learning"]
@@ -113,11 +114,27 @@ print(f"HOURLY: {hourly}")
 print(f"Empty: {empty_period}")
 print(f"Other: {other_period}")
 
-most_recent = sorted(ai_postings, key=listed_time_of, reverse= True)
+most_recent = sorted(ai_postings, key=listed_time_of, reverse=True)
 
 for row in most_recent[0:20]:
     print(row["title"])
 
 
 print(f"AI postings: {len(ai_postings)}")
+ai_posting_companies = [clean_company(posting["company_name"]) for posting in ai_postings if clean_company(posting["company_name"]) != "Unknown company"]
+company_counter = Counter(ai_posting_companies)
+print("Top 10 companies hiring for AI:")
+for i, (company, count) in enumerate(company_counter.most_common(10), start=1):
+    print(f"{i}. {company}: {count}")
 
+
+
+ai_posting_cities = [get_city(posting["location"]) for posting in ai_postings if get_city(posting["location"]) != "Remote / unspecified"]
+city_counter = Counter(ai_posting_cities)
+print("Top 10 cities for AI jobs:")
+for i, (city, count) in enumerate(city_counter.most_common(10), start=1):
+    print(f"{i}. {city}: {count}")
+
+ai_salaries = [to_annual_salary(posting["max_salary"], posting["pay_period"]) for posting in ai_postings if to_annual_salary(posting["max_salary"], posting["pay_period"]) is not None]
+print(f'AI postings with salary:{len(ai_salaries)} of {len(ai_postings)} ({(len(ai_salaries) / len(ai_postings)):.1%})')
+print(f'Average AI salary: {sum(ai_salaries) / len(ai_salaries):,.2f}')

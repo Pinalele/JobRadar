@@ -7,4 +7,6 @@ authors = [
     { name = "marcio", email = "marcio.pinela@gmail.com" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "counter>=1.0.0",
+]
