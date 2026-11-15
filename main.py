@@ -2,6 +2,32 @@ import csv
 import string
 from collections import Counter
 
+skills = [
+    # Linguagens
+    "python", "sql", "java", "scala", "typescript", "go", "rust",
+
+    # Dados e ML clássico
+    "pandas", "numpy", "scikit-learn", "spark", "databricks", "snowflake", "airflow",
+
+    # Deep learning
+    "pytorch", "tensorflow", "keras", "deep learning", "computer vision", "nlp",
+
+    # LLMs e AI generativa
+    "llm", "llms", "large language model", "generative ai", "genai",
+    "transformers", "hugging face", "huggingface", "openai", "prompt engineering",
+    "fine-tuning", "rag", "retrieval augmented generation",
+    "vector database", "embeddings",
+
+    # Frameworks de LLM e agentes
+    "langchain", "langgraph", "llamaindex", "ai agents", "agentic",
+
+    # MLOps e produção
+    "mlops", "mlflow", "docker", "kubernetes", "fastapi", "terraform", "git",
+
+    # Cloud
+    "aws", "azure", "gcp", "sagemaker", "bedrock", "vertex ai",
+]
+
 ai_words = ["ai", "ml", "llm"]
 ai_phrases = ["artificial intelligence", "machine learning"]
 
@@ -65,8 +91,24 @@ def project_salary(annual_salary: float, target: float, years: int = 5, raise_ra
 def listed_time_of(row):
     """Return when the posting was listed, as a number."""
     return float(row["listed_time"])
-ai_postings = []
 
+def skills_in(description: str) -> set:
+    """Return the skills from the skills list found in the description."""
+    found = set()
+    text = description.lower()
+    words = text.replace(",", " ").replace(".", " ").replace("/", " ").split()
+
+    for skill in skills:
+        if " " in skill:
+            if skill in text:
+                found.add(skill)
+        else:
+            if skill in words:
+                found.add(skill)
+
+    return found
+
+ai_postings = []
 total = 0
 with_salary = 0
 yearly = 0
@@ -136,5 +178,17 @@ for i, (city, count) in enumerate(city_counter.most_common(10), start=1):
     print(f"{i}. {city}: {count}")
 
 ai_salaries = [to_annual_salary(posting["max_salary"], posting["pay_period"]) for posting in ai_postings if to_annual_salary(posting["max_salary"], posting["pay_period"]) is not None]
-print(f'AI postings with salary:{len(ai_salaries)} of {len(ai_postings)} ({(len(ai_salaries) / len(ai_postings)):.1%})')
+print(f'AI postings with salary: {len(ai_salaries)} of {len(ai_postings)} ({(len(ai_salaries) / len(ai_postings)):.1%})')
 print(f'Average AI salary: {sum(ai_salaries) / len(ai_salaries):,.2f}')
+
+
+all_skills = []
+
+for posting in ai_postings:
+    all_skills.extend(skills_in(posting["description"]))
+
+counter = Counter(all_skills)
+
+print("Top 15 skills in AI postings:")
+for i, (skill, count) in enumerate(counter.most_common(15), start=1):
+    print(f"{i}. {skill}: {count} ({count / len(ai_postings):.1%})")
