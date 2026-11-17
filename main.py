@@ -1,80 +1,7 @@
 import csv
-import string
 from collections import Counter
-
-skills = [
-    # Linguagens
-    "python", "sql", "java", "scala", "typescript", "go", "rust",
-
-    # Dados e ML clássico
-    "pandas", "numpy", "scikit-learn", "spark", "databricks", "snowflake", "airflow",
-
-    # Deep learning
-    "pytorch", "tensorflow", "keras", "deep learning", "computer vision", "nlp",
-
-    # LLMs e AI generativa
-    "llm", "llms", "large language model", "generative ai", "genai",
-    "transformers", "hugging face", "huggingface", "openai", "prompt engineering",
-    "fine-tuning", "rag", "retrieval augmented generation",
-    "vector database", "embeddings",
-
-    # Frameworks de LLM e agentes
-    "langchain", "langgraph", "llamaindex", "ai agents", "agentic",
-
-    # MLOps e produção
-    "mlops", "mlflow", "docker", "kubernetes", "fastapi", "terraform", "git",
-
-    # Cloud
-    "aws", "azure", "gcp", "sagemaker", "bedrock", "vertex ai",
-]
-
-ai_words = ["ai", "ml", "llm"]
-ai_phrases = ["artificial intelligence", "machine learning"]
-
-
-def clean_title(title: str) -> str:
-    """Return the title without extra spaces and with each word capitalised."""
-    return string.capwords(title)
-
-
-def get_city(location: str) -> str:
-    """Return the city from a location like 'Lisbon, Portugal'."""
-    if location == "United States":
-        return "Remote / unspecified"
-    else:
-        return location.split(",")[0].strip()
-
-
-def clean_company(name: str) -> str:
-    """Return the company name without extra spaces, or 'Unknown company' if empty."""
-    name = name.strip()
-    if not name:
-        return "Unknown company"
-    return name
-
-def is_ai_role(title: str) -> bool:
-    """Return True if the title mentions AI or machine learning."""
-    for keyword in ai_phrases:
-        if keyword in title.lower():
-            return True
-    for keyword in ai_words:
-        if keyword in title.lower().replace("/", " ").split():
-            return True
-    return False
-
-def to_annual_salary(amount: str, pay_period: str) -> float | None:
-    """Convert a pay amount to a yearly salary, or return None if the period is unknown."""
-    if not amount:
-        return None
-    salary = float(amount)
-    if pay_period == "YEARLY":
-        return salary
-    elif pay_period == "MONTHLY":
-        return salary * 14
-    elif pay_period == "HOURLY":
-        return salary * 2080
-    else:
-        return None
+from cleaning import clean_title, get_city, clean_company, to_annual_salary
+from matching import is_ai_role, skills_in
 
 
 def project_salary(annual_salary: float, target: float, years: int = 5, raise_rate: float = 0.03) -> None:
@@ -92,22 +19,6 @@ def listed_time_of(row):
     """Return when the posting was listed, as a number."""
     return float(row["listed_time"])
 
-def skills_in(description: str) -> set:
-    """Return the skills from the skills list found in the description."""
-    found = set()
-    text = description.lower()
-    words = text.replace(",", " ").replace(".", " ").replace("/", " ").split()
-
-    for skill in skills:
-        if " " in skill:
-            if skill in text:
-                found.add(skill)
-        else:
-            if skill in words:
-                found.add(skill)
-
-    return found
-
 ai_postings = []
 total = 0
 with_salary = 0
@@ -116,7 +27,6 @@ monthly = 0
 hourly = 0
 empty_period = 0
 other_period = 0
-
 
 
 with open("data/postings.csv", encoding="utf-8", newline="") as file:
