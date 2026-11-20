@@ -1,10 +1,13 @@
+from dataclasses import dataclass
+
+
+@dataclass
 class Posting:
-    def __init__(self, title, company, location, max_salary, pay_period):
-        self.title = title
-        self.company = company
-        self.location = location
-        self.max_salary = max_salary
-        self.pay_period = pay_period
+    title: str
+    company: str
+    location: str
+    max_salary: str = ""
+    pay_period: str = ""
 
     def city(self):
         """Return the city from a location like 'Lisbon, Portugal'."""
@@ -14,6 +17,7 @@ class Posting:
             return self.location.split(",")[0].strip()
 
     def annual_salary(self):
+        """Return the yearly salary, or None if it is missing or invalid."""
         if not self.max_salary:
             return None
         try:
@@ -29,20 +33,25 @@ class Posting:
         else:
             return None
 
-
     def summary(self):
+        """Return a one-line summary of the posting."""
         if self.annual_salary() is None:
             salary_text = "salary not available"
         else:
             salary_text = f"{self.annual_salary():,.2f}"
 
-        return f'{self.title} @ {self.company} ({self.city()}): {salary_text}'
+        return f"{self.title} @ {self.company} ({self.city()}): {salary_text}"
 
-postings = [
-    Posting("ML Engineer", "Acme AI Labs", "Lisbon, Portugal", "50.0", "HOURLY"),
-    Posting("Data Scientist", "DataCo", "Porto, Portugal", "3000.0", "MONTHLY"),
-    Posting("AI Engineer", "Robo Inc", "Braga, Portugal", "", ""),
-]
 
-for posting in postings:
-    print(posting.summary())
+if __name__ == "__main__":
+    postings = [
+        Posting("ML Engineer", "Acme AI Labs", "Lisbon, Portugal", "50.0", "HOURLY"),
+        Posting("Data Scientist", "DataCo", "Porto, Portugal", "3000.0", "MONTHLY"),
+        Posting("AI Engineer", "Robo Inc", "Braga, Portugal", "", ""),
+    ]
+
+    for posting in postings:
+        print(posting.summary())
+
+    print(postings[0])
+    print(Posting("AI Engineer", "Robo Inc", "Braga, Portugal").summary())
