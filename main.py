@@ -24,6 +24,13 @@ def listed_time_of(row):
     return float(row["listed_time"])
 
 
+def load_ai_postings(path):
+    """Load AI postings from a JSON file as Posting objects."""
+    with open(path, "r", encoding="utf-8") as f:
+        posting_dicts = json.load(f)
+    return [Posting(**d) for d in posting_dicts]
+
+
 ai_postings = []
 total = 0
 with_salary = 0
@@ -68,7 +75,8 @@ ai_posting_objects = [
             location=row["location"],
             max_salary=row["max_salary"],
             pay_period=row["pay_period"],
-            description=row["description"]) for row in ai_postings]
+            description=row["description"],
+            listed_time=row["listed_time"]) for row in ai_postings]
 
 ai_posting_dicts = [asdict(posting_object) for posting_object in ai_posting_objects]
 
@@ -124,3 +132,7 @@ counter = Counter(all_skills)
 print("Top 15 skills in AI postings:")
 for i, (skill, count) in enumerate(counter.most_common(15), start=1):
     print(f"{i}. {skill}: {count} ({count / len(ai_postings):.1%})")
+
+loaded = load_ai_postings("data/ai_postings.json")
+print(len(loaded))
+print(loaded[0].summary())

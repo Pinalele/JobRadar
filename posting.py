@@ -9,6 +9,7 @@ class Posting:
     max_salary: str = ""
     pay_period: str = ""
     description: str = ""
+    listed_time: str = ""
 
     def city(self):
         """Return the city from a location like 'Lisbon, Portugal'."""
