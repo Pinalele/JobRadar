@@ -2,9 +2,13 @@ import csv
 import json
 from collections import Counter
 from dataclasses import asdict
+from pathlib import Path
+
 from cleaning import clean_title, get_city, clean_company, to_annual_salary
 from matching import is_ai_role, skills_in
 from posting import Posting
+
+AI_POSTINGS_FILE = Path(__file__).parent / "data" / "ai_postings.json"
 
 
 def project_salary(annual_salary: float, target: float, years: int = 5, raise_rate: float = 0.03) -> None:
@@ -19,9 +23,9 @@ def project_salary(annual_salary: float, target: float, years: int = 5, raise_ra
         print(f"Target not reached in {years} years")
 
 
-def listed_time_of(row):
+def listed_time_of(posting):
     """Return when the posting was listed, as a number."""
-    return float(row["listed_time"])
+    return float(posting.listed_time)
 
 
 def load_ai_postings(path):
@@ -31,108 +35,107 @@ def load_ai_postings(path):
     return [Posting(**d) for d in posting_dicts]
 
 
-ai_postings = []
-total = 0
-with_salary = 0
-yearly = 0
-monthly = 0
-hourly = 0
-empty_period = 0
-other_period = 0
+if AI_POSTINGS_FILE.exists():
+    ai_posting_objects = load_ai_postings(AI_POSTINGS_FILE)
+    print(f"Loaded {len(ai_posting_objects)} AI postings from cache")
+else:
+    ai_postings = []
+    total = 0
+    with_salary = 0
+    yearly = 0
+    monthly = 0
+    hourly = 0
+    empty_period = 0
+    other_period = 0
 
-with open("data/postings.csv", encoding="utf-8", newline="") as file:
-    reader = csv.DictReader(file)
-    for i, row in enumerate(reader):
-        if is_ai_role(row["title"]):
-            ai_postings.append(row)
-        total += 1
-        annual_salary = to_annual_salary(row["max_salary"], row["pay_period"])
-        pay_period = row["pay_period"]
-        if pay_period == "YEARLY":
-            yearly += 1
-        elif pay_period == "MONTHLY":
-            monthly += 1
-        elif pay_period == "HOURLY":
-            hourly += 1
-        elif pay_period == "":
-            empty_period += 1
-        else:
-            other_period += 1
-        title = clean_title(row["title"])
-        city = get_city(row["location"])
-        company = clean_company(row["company_name"])
-        if annual_salary is None:
-            salary_text = "salary not available"
-        else:
-            salary_text = f"{annual_salary:,.2f}"
-            with_salary += 1
-        if i < 20:
-            print(f'{i + 1} - {title} @ {company} ({city}): {salary_text}')
+    with open("data/postings.csv", encoding="utf-8", newline="") as file:
+        reader = csv.DictReader(file)
+        for i, row in enumerate(reader):
+            if is_ai_role(row["title"]):
+                ai_postings.append(row)
+            total += 1
+            annual_salary = to_annual_salary(row["max_salary"], row["pay_period"])
+            pay_period = row["pay_period"]
+            if pay_period == "YEARLY":
+                yearly += 1
+            elif pay_period == "MONTHLY":
+                monthly += 1
+            elif pay_period == "HOURLY":
+                hourly += 1
+            elif pay_period == "":
+                empty_period += 1
+            else:
+                other_period += 1
+            title = clean_title(row["title"])
+            city = get_city(row["location"])
+            company = clean_company(row["company_name"])
+            if annual_salary is None:
+                salary_text = "salary not available"
+            else:
+                salary_text = f"{annual_salary:,.2f}"
+                with_salary += 1
+            if i < 20:
+                print(f"{i + 1} - {title} @ {company} ({city}): {salary_text}")
 
-ai_posting_objects = [
-    Posting(title=row["title"],
-            company=row["company_name"],
-            location=row["location"],
-            max_salary=row["max_salary"],
-            pay_period=row["pay_period"],
-            description=row["description"],
-            listed_time=row["listed_time"]) for row in ai_postings]
+    ai_posting_objects = [
+        Posting(title=row["title"],
+                company=row["company_name"],
+                location=row["location"],
+                max_salary=row["max_salary"],
+                pay_period=row["pay_period"],
+                description=row["description"],
+                listed_time=row["listed_time"])
+        for row in ai_postings
+    ]
 
-ai_posting_dicts = [asdict(posting_object) for posting_object in ai_posting_objects]
+    ai_posting_dicts = [asdict(posting) for posting in ai_posting_objects]
+    with open(AI_POSTINGS_FILE, "w", encoding="utf-8") as f:
+        json.dump(ai_posting_dicts, f, indent=2)
+    print(f"Saved {len(ai_posting_objects)} AI postings to {AI_POSTINGS_FILE.name}")
 
-for posting in ai_posting_objects[0:5]:
-    print(posting.summary())
-posting_json = "data/ai_postings.json"
-with open(posting_json, "w", encoding="utf-8") as f:
-    json.dump(ai_posting_dicts, f, indent=2)
+    print(f"Total postings: {total}")
+    print(f"With salary: {with_salary} ({with_salary / total:.1%})")
+    print(f"YEARLY: {yearly}")
+    print(f"MONTHLY: {monthly}")
+    print(f"HOURLY: {hourly}")
+    print(f"Empty: {empty_period}")
+    print(f"Other: {other_period}")
 
-print(f'Saved {len(ai_posting_objects)} AI postings to {posting_json}')
+# Most recent AI postings
+most_recent = sorted(ai_posting_objects, key=listed_time_of, reverse=True)
+print("20 most recent AI postings:")
+for posting in most_recent[0:20]:
+    print(posting.title)
 
-print(f"Total postings: {total}")
-print(f"With salary: {with_salary} ({with_salary / total:.1%})")
-print(f"YEARLY: {yearly}")
-print(f"MONTHLY: {monthly}")
-print(f"HOURLY: {hourly}")
-print(f"Empty: {empty_period}")
-print(f"Other: {other_period}")
-
-most_recent = sorted(ai_postings, key=listed_time_of, reverse=True)
-
-for row in most_recent[0:20]:
-    print(row["title"])
-
-print(f"AI postings: {len(ai_postings)}")
-ai_posting_companies = [clean_company(posting["company_name"]) for posting in ai_postings if
-                        clean_company(posting["company_name"]) != "Unknown company"]
+# Top companies
+print(f"AI postings: {len(ai_posting_objects)}")
+ai_posting_companies = [clean_company(posting.company) for posting in ai_posting_objects
+                        if clean_company(posting.company) != "Unknown company"]
 company_counter = Counter(ai_posting_companies)
 print("Top 10 companies hiring for AI:")
 for i, (company, count) in enumerate(company_counter.most_common(10), start=1):
     print(f"{i}. {company}: {count}")
 
-ai_posting_cities = [get_city(posting["location"]) for posting in ai_postings if
-                     get_city(posting["location"]) != "Remote / unspecified"]
+# Top cities
+ai_posting_cities = [posting.city() for posting in ai_posting_objects
+                     if posting.city() != "Remote / unspecified"]
 city_counter = Counter(ai_posting_cities)
 print("Top 10 cities for AI jobs:")
 for i, (city, count) in enumerate(city_counter.most_common(10), start=1):
     print(f"{i}. {city}: {count}")
 
-ai_salaries = [to_annual_salary(posting["max_salary"], posting["pay_period"]) for posting in ai_postings if
-               to_annual_salary(posting["max_salary"], posting["pay_period"]) is not None]
-print(
-    f'AI postings with salary: {len(ai_salaries)} of {len(ai_postings)} ({(len(ai_salaries) / len(ai_postings)):.1%})')
-print(f'Average AI salary: {sum(ai_salaries) / len(ai_salaries):,.2f}')
+# Salaries
+ai_salaries = [posting.annual_salary() for posting in ai_posting_objects
+               if posting.annual_salary() is not None]
+print(f"AI postings with salary: {len(ai_salaries)} of {len(ai_posting_objects)} "
+      f"({len(ai_salaries) / len(ai_posting_objects):.1%})")
+print(f"Average AI salary: {sum(ai_salaries) / len(ai_salaries):,.2f}")
 
+# Top skills
 all_skills = []
-
-for posting in ai_postings:
-    all_skills.extend(skills_in(posting["description"]))
-
-counter = Counter(all_skills)
-
+for posting in ai_posting_objects:
+    all_skills.extend(skills_in(posting.description))
+skill_counter = Counter(all_skills)
 print("Top 15 skills in AI postings:")
-for i, (skill, count) in enumerate(counter.most_common(15), start=1):
-    print(f"{i}. {skill}: {count} ({count / len(ai_postings):.1%})")
-
-loaded = load_ai_postings("data/ai_postings.json")
-print(len(loaded))
-print(loaded[0].summary())
+for i, (skill, count) in enumerate(skill_counter.most_common(15), start=1):
+    print(f"{i}. {skill}: {count} ({count / len(ai_posting_objects):.1%})")
