@@ -1,8 +1,11 @@
 import string
 
 def clean_title(title: str) -> str:
-    """Return the title without extra spaces and with each word capitalised."""
-    return string.capwords(title)
+    """Return the title without extra spaces, each word capitalised and acronyms in upper case."""
+    acronyms = ["ai", "ml", "llm", "nlp", "aws"]
+    words = title.split()
+    clean_words = [word.upper() if word.lower() in acronyms else word.capitalize() for word in words]
+    return " ".join(clean_words)
 
 def get_city(location: str) -> str:
     """Return the city from a location like 'Lisbon, Portugal'."""
