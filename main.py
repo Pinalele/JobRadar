@@ -1,12 +1,11 @@
 import csv
-import json
 from collections import Counter
-from dataclasses import asdict
 from pathlib import Path
 
 from cleaning import clean_title, get_city, clean_company, to_annual_salary
 from matching import is_ai_role, skills_in
 from posting import Posting
+from storage import load_postings, save_postings
 
 AI_POSTINGS_FILE = Path(__file__).parent / "data" / "ai_postings.json"
 
@@ -28,15 +27,9 @@ def listed_time_of(posting):
     return float(posting.listed_time)
 
 
-def load_ai_postings(path):
-    """Load AI postings from a JSON file as Posting objects."""
-    with open(path, "r", encoding="utf-8") as f:
-        posting_dicts = json.load(f)
-    return [Posting(**d) for d in posting_dicts]
-
 
 if AI_POSTINGS_FILE.exists():
-    ai_posting_objects = load_ai_postings(AI_POSTINGS_FILE)
+    ai_posting_objects = load_postings(AI_POSTINGS_FILE)
     print(f"Loaded {len(ai_posting_objects)} AI postings from cache")
 else:
     ai_postings = []
@@ -88,9 +81,7 @@ else:
         for row in ai_postings
     ]
 
-    ai_posting_dicts = [asdict(posting) for posting in ai_posting_objects]
-    with open(AI_POSTINGS_FILE, "w", encoding="utf-8") as f:
-        json.dump(ai_posting_dicts, f, indent=2)
+    save_postings(ai_posting_objects, AI_POSTINGS_FILE)
     print(f"Saved {len(ai_posting_objects)} AI postings to {AI_POSTINGS_FILE.name}")
 
     print(f"Total postings: {total}")
