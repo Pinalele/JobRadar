@@ -1,5 +1,5 @@
 import pytest
-from cleaning import clean_title, to_annual_salary
+from cleaning import clean_title, to_annual_salary, get_city, clean_company
 
 
 @pytest.mark.parametrize("title, expected", [("  data scientist  ", "Data Scientist"),
@@ -18,3 +18,18 @@ def test_clean_title(title, expected):
                                                                 ("$3,000", "MONTHLY", None)])
 def test_to_annual_salary(salary_input, pay_period, expected):
     assert to_annual_salary(salary_input, pay_period) == expected
+
+
+
+@pytest.mark.parametrize("city, expected", [("Lisbon, Portugal", "Lisbon"),
+                                                ("United States", "Remote / unspecified"),
+                                                ("Greater Philadelphia", "Greater Philadelphia")])
+def test_get_city(city, expected):
+    assert get_city(city) == expected
+
+
+@pytest.mark.parametrize("company, expected", [("  Acme  ", "Acme"),
+                                            ("", "Unknown company"),
+                                            ("   ", "Unknown company")])
+def test_clean_company(company, expected):
+    assert clean_company(company) == expected
