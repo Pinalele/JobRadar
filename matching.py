@@ -15,6 +15,12 @@ skills = [
 ai_words = ["ai", "ml", "llm"]
 ai_phrases = ["artificial intelligence", "machine learning"]
 
+def words_in_text(text: str) -> list[str]:
+    """Return the words of a text, in lower case and without punctuation."""
+    text = text.lower()
+    for sign in ",.;:()!?/":
+        text = text.replace(sign, " ")
+    return text.split()
 
 def is_ai_role(title: str) -> bool:
     """Return True if the title mentions AI or machine learning."""
@@ -22,7 +28,7 @@ def is_ai_role(title: str) -> bool:
         if keyword in title.lower():
             return True
     for keyword in ai_words:
-        if keyword in title.lower().replace("/", " ").split():
+        if keyword in words_in_text(title):
             return True
     return False
 
@@ -31,7 +37,7 @@ def skills_in(description: str) -> set:
     """Return the skills from the skills list found in the description."""
     found = set()
     text = description.lower()
-    words = text.replace(",", " ").replace(".", " ").replace("/", " ").split()
+    words = words_in_text(text)
 
     for skill in skills:
         if " " in skill:
@@ -41,4 +47,5 @@ def skills_in(description: str) -> set:
             if skill in words:
                 found.add(skill)
     return found
+
 
